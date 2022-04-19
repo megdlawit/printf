@@ -2,7 +2,7 @@
 
 /*
  * File: convert_c.c
- * Auth: Efa-Iwa Eleng
+ * Auth: megdlawit
  */
 
 unsigned int convert_c(va_list args, buffer_t *output,
