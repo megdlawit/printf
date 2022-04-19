@@ -2,7 +2,7 @@
 
 /*
  * File: base_converters.c
- * Auth: Efa-Iwa Eleng
+ * Auth: megdlawit
  */
 
 unsigned int convert_sbase(buffer_t *output, long int num, char *base,
