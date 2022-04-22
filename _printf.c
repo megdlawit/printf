@@ -1,96 +1,99 @@
 #include "main.h"
-
-/*
- * File: _printf.c
- * Auth: megdlawit
- *	 
- */
-
-void cleanup(va_list args, buffer_t *output);
-int run_printf(const char *format, va_list args, buffer_t *output);
-int _printf(const char *format, ...);
-
 /**
- * cleanup - Peforms cleanup operations for _printf.
- * @args: A va_list of arguments provided to _printf.
- * @output: A buffer_t struct.
+ * print_format - format controller
+ * @format: the base string
+ * @valist : hold the argument passed
+ * Return: total size of the argument with the total size of the base string
  */
-void cleanup(va_list args, buffer_t *output)
+int print_format(const char *format, va_list valist)
 {
-	va_end(args);
-	write(1, output->start, output->len);
-	free_buffer(output);
-}
+	unsigned int count = 0;
+	int result;
+	int i = 0;
 
-/**
- * run_printf - Reads through the format string for _printf.
- * @format: Character string to print - may contain directives.
- * @output: A buffer_t struct containing a buffer.
- * @args: A va_list of arguments.
- *
- * Return: The number of characters stored to output.
- */
-int run_printf(const char *format, va_list args, buffer_t *output)
-{
-	int i, wid, prec, ret = 0;
-	char tmp;
-	unsigned char flags, len;
-	unsigned int (*f)(va_list, buffer_t *,
-			unsigned char, int, int, unsigned char);
-
-	for (i = 0; *(format + i); i++)
+	for (i = 0; format[i]; i++)
 	{
-		len = 0;
-		if (*(format + i) == '%')
+		if (format[i] == '%')
 		{
-			tmp = 0;
-			flags = handle_flags(format + i + 1, &tmp);
-			wid = handle_width(args, format + i + tmp + 1, &tmp);
-			prec = handle_precision(args, format + i + tmp + 1,
-					&tmp);
-			len = handle_length(format + i + tmp + 1, &tmp);
-
-			f = handle_specifiers(format + i + tmp + 1);
-			if (f != NULL)
+			result = formatchecker(format, valist, &i);
+			if (result == -1)
 			{
-				i += tmp + 1;
-				ret += f(args, output, flags, wid, prec, len);
-				continue;
+				return (-1);
 			}
-			else if (*(format + i + tmp + 1) == '\0')
-			{
-				ret = -1;
-				break;
-			}
+		count += result;
+		continue;
 		}
-		ret += _memcpy(output, (format + i), 1);
-		i += (len != 0) ? 1 : 0;
+	print_out(format[i]);
+	count++;
 	}
-	cleanup(args, output);
-	return (ret);
+	return (count);
 }
 
 /**
- * _printf - Outputs a formatted string.
- * @format: Character string to print - may contain directives.
- *
- * Return: The number of characters printed.
+ * formatchecker - checks the format and print the character
+ * @str: the base string
+ * @valist: number of arguments passed
+ * @j: address of %
+ * Return: total number of printed charcter inside the argument
+ */
+int formatchecker(const char *str, va_list valist, int *j)
+{
+	int i;
+	int p;
+	int formats;
+
+	Data checker[] = {{'c', print_char},
+			  {'s', print_string},
+			  {'d', print_int},
+			  {'i', print_int},
+			  {'b', print_binary},
+			  {'u', print_unsigned},
+			  {'o', print_octal},
+			  {'x', print_hex},
+			  {'X', print_hex_big},
+			  {'S', print_bigS},
+			  {'p', print_address},
+			  {'R', print_rot13}};
+	*j = *j + 1;
+	if (str[*j] == '\0')
+	{
+		return (-1);
+	}
+	if (str[*j] == '%')
+	{
+		print_out('%');
+		return (1);
+	}
+	formats = sizeof(checker) / sizeof(checker[0]);
+	for (i = 0; i < formats; i++)
+	{
+		if (str[*j] == checker[i].l)
+		{
+			p = checker[i].ptr(valist);
+			return (p);
+		}
+	}
+	print_out('%'), print_out(str[*j]);
+	return (2);
+}
+
+/**
+ * _printf - prints anything
+ * @format: list of argument type passed
+ * Return: number of character printed
  */
 int _printf(const char *format, ...)
 {
-	buffer_t *output;
-	va_list args;
-	int ret;
+	va_list ag;
+	int f;
 
 	if (format == NULL)
+	{
 		return (-1);
-	output = init_buffer();
-	if (output == NULL)
-		return (-1);
-
-	va_start(args, format);
-
-	ret = run_printf(format, args, output);
-
-	return (ret);
+	}
+	va_start(ag, format);
+	f = print_format(format, ag);
+	print_out(-1);
+	va_end(ag);
+	return (f);
 }
